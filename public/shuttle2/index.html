@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    
+  		<link rel="stylesheet" href="/css/style.css">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
+		
+		<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+		<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+		
+		<link href="/shuttle2/index.xml" rel="alternate" type="application/rss+xml" title="Shuttle Tracking" />
+	</head>
+
+    <body>
+        		<nav class="nav">
+			<div class="nav-container">
+				<a href="/">
+					<h2 class="nav-title">Shuttle Tracking</h2>
+				</a>
+				<ul>
+    
+    <li><a href="/shuttle1">Etobicoke - Kipling</a></li>
+    <li><a href="/shuttle2">Etobicoke - Downtown</a></li>
+    <li><a href="/shuttle3"></a></li>
+    <li><a href="/shuttle4"></a></li>
+</ul>
+			</div>
+		</nav>
+
+        
+
+<head>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js"></script>
+
+</head>
+<main>
+  <p style= "margin: 30px 10px;
+    border: 1px solid;
+    text-align: center;
+    padding: 15px">
+    <span id="init-message"></span>
+    <b id="next-bus-info"></b>
+  </p>
+  <div id="map-canvas-1" style="height:600px;margin-bottom:20px"></div>
+  <div>
+    <img src="https://s3.us-east-2.amazonaws.com/dashboard-campaign/Screen+Shot+2019-03-25+at+10.55.40+PM.png" alt="Kipling Station Schedule" width="100%" height=auto>
+  </div>
+  
+  
+  <script type='text/javascript'>
+    $(window).on('beforeunload', function(){
+         console.log("beforeUnload event!");
+     });
+  </script>
+  <script>
+
+    var initialize = function() {
+      var mapId1 = 'map-canvas-1';
+      var deviceId1 = '4071161123';
+
+      var mapId2 = 'map-canvas-2';
+      var deviceId2 = '4071161067';
+
+      var startCoordinates = {
+        lat: 43.6181936,
+        lng: -79.5349687
+      }
+      var mapZoom = 16;
+
+      initializeMap(mapId1, deviceId1, startCoordinates, mapZoom);
+      initializeMap(mapId2, deviceId2, startCoordinates, mapZoom);
+     } 
+
+    window.initialize = initialize;
+
+    var initializeMap = function(mapId, deviceId, startCoordinates, mapZoom) {
+      var map;
+      var mark;
+      var icon;
+      var trafficLayer; 
+      var infoWindow;
+      var lat = startCoordinates.lat;
+      var lng = startCoordinates.lng;
+
+      
+      
+      var URL ="https://7550qi28b2.execute-api.us-east-1.amazonaws.com/production/getTrackingEvents?deviceId=" + 8042461089;
+      map  = new google.maps.Map(document.getElementById(mapId), {center:{lat:lat,lng:lng},zoom:mapZoom,disableDefaultUI: false});
+      trafficLayer = new google.maps.TrafficLayer();
+      trafficLayer.setMap(map);
+      icon = {
+          
+          url: 'https://s3.us-east-2.amazonaws.com/dashboard-campaign/busicon.png',
+          size: new google.maps.Size(30,30),
+          scaledSize: new google.maps.Size(30,30),
+          origin: new google.maps.Point(0, 0),
+      };
+      mark = new google.maps.Marker({position:{lat:lat, lng:lng}, icon:icon, map:map, optimized: false});
+
+      infoWindow =  new google.maps.InfoWindow({
+        content: "<b> Ikea Shuttle </b>"
+      });
+      infoWindow.open(map, mark);
+
+      var map_center = new google.maps.LatLng(lat, lng);
+      var path_bounds = new google.maps.LatLngBounds();
+      path_bounds.extend(
+        new google.maps.LatLng(lat,lng)
+      );
+
+      getDataAndUpdateMap(URL, mark, map, infoWindow);
+      setInterval(function() {
+        getDataAndUpdateMap(URL, mark, map, infoWindow);
+      }, 20000);
+    };
+    
+    
+    var getDataAndUpdateMap = function(URL, mark, map,infoWindow) {
+      $.ajax({
+        url: URL, 
+        beforeSend: function(xhr) {
+          xhr.setRequestHeader('content-type', 'application/json');
+          xhr.setRequestHeader('x-api-key', 'VPCIrxzy2rLzuy8SiFhU61v5zJvNQdo748j5dEUe');
+        },
+        crossDomain: true,
+        type: "GET",
+     
+        success: (result) => {
+          drawAndUpdateMap(result, mark, map, infoWindow);
+        },
+        error: (error) => {
+          console.log(`Error ${JSON.stringify(error)}`);
+        }
+      });
+    }
+
+    var drawAndUpdateMap = function(payload, mark, map, infoWindow) {
+      var items = payload.vehicleData.Items;
+      var geofence = _.get(payload, "lastGeofencingEvent");
+      window.lastGeoLocation = _.get(geofence, "Items[0].location");
+      window.lastGeoEventType = _.get(geofence, "Items[0].type");  
+      
+      
+
+      var lastSeen = "unkown";
+      var lastItem = items[0];
+      var lat = lastItem.latitude;
+      var lng = lastItem.longitude;
+      lastSeen = lastItem.timestamp;
+      var lastSeenOn = moment(lastSeen).fromNow(); 
+      map.setCenter({lat:lat, lng:lng, alt:0});
+      mark.setPosition({lat:lat, lng:lng, alt:0});
+      infoWindow.setContent("Shuttle spotted <b>" + lastSeenOn + "</b>" + " - " + moment(lastSeen).format('dddd - hh:mm a'));
+      infoWindow.open(map, mark);
+      
+      var kiplingStation = {
+        latitude : 43.636842 ,
+        longitude : -79.534777,
+      };
+
+      var ikeaEtobicoke = {
+        latitude : 43.6183013,
+        longitude : -79.53453304,
+      };
+
+      var origin = new google.maps.LatLng(lat,lng);
+      var destinationA = new google.maps.LatLng(ikeaEtobicoke.latitude, ikeaEtobicoke.longitude);
+      var destinationB = new google.maps.LatLng(kiplingStation.latitude, kiplingStation.longitude);
+
+      var service = new google.maps.DistanceMatrixService();
+      service.getDistanceMatrix({
+        origins: [origin],
+        destinations: [destinationA, destinationB],
+        travelMode: 'DRIVING',
+      }, callback);
+
+      function callback(response, status) {
+      
+      
+        console.log("check out the distance matrix service");
+        var distanceToIkea  = _.get(response, "rows[0].elements[0].distance.text");
+        var durationToIkea = _.get(response, "rows[0].elements[0].duration.text");
+        var distanceToKipling = _.get(response, "rows[0].elements[1].distance.text");
+        var durationToKipling = _.get(response, "rows[0].elements[1].duration.text");;
+        
+        
+        
+
+        
+        
+
+        displayNextBusInfo(window.lastGeoEventType, window.lastGeoLocation, durationToIkea, durationToKipling);
+        
+      }
+
+      function displayNextBusInfo(lastEventType, lastLocation, durationToIkea, durationToKipling) {
+        let initialMessage;
+        let nextBusInfo;
+        if (lastEventType == "enter") {
+          initialMessage = `Bus is at ${lastLocation} and will leave shortly `;
+          nextBusInfo = "(Check the schedule for departure time)";
+        } else if(lastEventType == "leave") {
+          initialMessage = "Shuttle is currently on route to ";
+          if (lastLocation == "ikea") {
+            nextBusInfo =  `kipling station. Approximate arrival time is ${durationToKipling}`;
+          } else if(lastLocation == "kipling") {
+            nextBusInfo = ` Ikea Etobicoke store. Approximate arrival time is ${durationToIkea}`;
+          }
+        }
+        document.getElementById("init-message").innerHTML = initialMessage;
+        document.getElementById("next-bus-info").innerHTML = nextBusInfo;
+      }
+    }
+  </script>
+  
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyChv9gB2NoP1EaDPNRASTZQORtxtZNLYu8&callback=initialize"></script>
+  
+</main>
+
+
+        		<footer>
+			<span>
+			&copy; <time datetime="2019-05-17 18:02:40.562082 -0400 EDT m=&#43;0.070080659">2019</time> Powered by <a href='https://pitstopconnect.com'>Pitstop</a>
+			</span>
+		</footer>
+
+    </body>
+</html>
