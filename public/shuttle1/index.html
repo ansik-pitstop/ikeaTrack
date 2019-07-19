@@ -61,10 +61,7 @@
 
     var initialize = function() {
       var mapId1 = 'map-canvas-1';
-      var deviceId1 = '4071161123';
-
-      var mapId2 = 'map-canvas-2';
-      var deviceId2 = '4071161067';
+      var deviceId1 = '8120778253';
 
       var startCoordinates = {
         lat: 43.6181936,
@@ -73,7 +70,6 @@
       var mapZoom = 16;
 
       initializeMap(mapId1, deviceId1, startCoordinates, mapZoom);
-      initializeMap(mapId2, deviceId2, startCoordinates, mapZoom);
      } 
 
     window.initialize = initialize;
@@ -89,7 +85,7 @@
 
       
       
-      var URL ="https://7550qi28b2.execute-api.us-east-1.amazonaws.com/production/getTrackingEvents?deviceId=" + 8042461089;
+      var URL ="https://7550qi28b2.execute-api.us-east-1.amazonaws.com/production/getTrackingEvents?deviceId=" + deviceId;
       map  = new google.maps.Map(document.getElementById(mapId), {center:{lat:lat,lng:lng},zoom:mapZoom,disableDefaultUI: false});
       trafficLayer = new google.maps.TrafficLayer();
       trafficLayer.setMap(map);
@@ -225,7 +221,7 @@
 
         		<footer>
 			<span>
-			&copy; <time datetime="2019-05-17 18:02:40.56206 -0400 EDT m=&#43;0.070057923">2019</time> Powered by <a href='https://pitstopconnect.com'>Pitstop</a>
+			&copy; <time datetime="2019-07-19 10:33:53.878225 -0400 EDT m=&#43;0.068750418">2019</time> Powered by <a href='https://pitstopconnect.com'>Pitstop</a>
 			</span>
 		</footer>
 
