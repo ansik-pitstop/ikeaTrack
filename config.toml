@@ -2,5 +2,6 @@ theme="tale"
 baseURL = "http://example.org/"
 languageCode = "en-us"
 title = "Shuttle Tracking"
+
 [Author]
   name="Pitstop"
